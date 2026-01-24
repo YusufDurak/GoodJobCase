@@ -16,9 +16,9 @@ public class Block : MonoBehaviour
     public int ColorID { get; private set; }
     public GridPosition GridPos { get; private set; }
     public bool IsActive { get; private set; }
+    public Color CurrentColor { get; private set; }
     
     [Header("Animation Settings")]
-    [SerializeField] private float spawnPunchScale = 1.2f;
     [SerializeField] private float spawnPunchDuration = 0.3f;
     [SerializeField] private float clickPunchScale = 1.15f;
     [SerializeField] private float clickPunchDuration = 0.2f;
@@ -51,6 +51,9 @@ public class Block : MonoBehaviour
         spriteRenderer.sprite = colorData.DefaultSprite;
         spriteRenderer.enabled = true;
         boxCollider.enabled = true;
+        
+        // Cache the sprite color for VFX (avoid GetComponent calls)
+        CurrentColor = spriteRenderer.color;
         
         // Reset transform
         transform.localScale = Vector3.zero;
@@ -93,6 +96,9 @@ public class Block : MonoBehaviour
         }
 
         spriteRenderer.sprite = newSprite;
+        
+        // Update cached color when sprite changes
+        CurrentColor = spriteRenderer.color;
     }
 
     /// <summary>

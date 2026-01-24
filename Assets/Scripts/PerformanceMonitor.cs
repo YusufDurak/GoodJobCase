@@ -44,8 +44,9 @@ public class PerformanceMonitor : MonoBehaviour
         float memoryMB = totalMemory / (1024f * 1024f);
 
         // Object counts
-        int totalObjects = FindObjectsOfType<GameObject>().Length;
-        int activeBlocks = FindObjectsOfType<Block>().Length;
+        
+        int totalObjects = FindObjectsByType<GameObject>(FindObjectsSortMode.None).Length;
+        int activeBlocks = FindObjectsByType<Block>(FindObjectsSortMode.None).Length;
 
         // Build stats string
         string stats = $"FPS: {fps:F1}\n";

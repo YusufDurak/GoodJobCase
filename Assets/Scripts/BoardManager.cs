@@ -153,6 +153,7 @@ public class BoardManager : MonoBehaviour
         {
             // Play feedback on clicked block
             block.PlayClickFeedback();
+            AudioManager.Instance.PlayPop();
             
             // Start destruction sequence
             StartCoroutine(DestroyMatchedBlocksSequence(matchedBlocks));
@@ -222,9 +223,18 @@ public class BoardManager : MonoBehaviour
         // Wait for destruction delay
         yield return new WaitForSeconds(destroyDelay);
 
-        // Remove blocks from grid and return to pool
+        // Remove blocks from grid and play particle effects
         foreach (Block block in blocksToDestroy)
         {
+            // Play explosion particle effect (if VFXManager exists)
+            if (VFXManager.Instance != null)
+            {
+                VFXManager.Instance.PlayExplosion(
+                    block.transform.position, 
+                    block.CurrentColor  // Use cached color instead of GetComponent
+                );
+            }
+    
             grid[block.GridPos.Row, block.GridPos.Column] = null;
         }
         blockPool.ReturnBlocks(blocksToDestroy);
