@@ -61,6 +61,16 @@ public class BoardManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Get the board dimensions in world space (for camera fitting)
+    /// </summary>
+    public Vector2 GetBoardDimensions()
+    {
+        float width = columns * (blockSize + blockSpacing) - blockSpacing;
+        float height = rows * (blockSize + blockSpacing) - blockSpacing;
+        return new Vector2(width, height);
+    }
+
+    /// <summary>
     /// Generate the initial game board
     /// </summary>
     private void GenerateBoard()
@@ -71,7 +81,13 @@ public class BoardManager : MonoBehaviour
         // Calculate board centering
         float totalWidth = columns * (blockSize + blockSpacing) - blockSpacing;
         float totalHeight = rows * (blockSize + blockSpacing) - blockSpacing;
-        Vector3 startPos = new Vector3(-totalWidth / 2f, -totalHeight / 2f, 0);
+        
+        // Fix: Center the grid properly by accounting for block positions
+        // Blocks go from index 0 to (columns-1), center should be at the midpoint
+        float centerOffsetX = ((columns - 1) * (blockSize + blockSpacing)) / 2f;
+        float centerOffsetY = ((rows - 1) * (blockSize + blockSpacing)) / 2f;
+        
+        Vector3 startPos = new Vector3(-centerOffsetX, -centerOffsetY, 0);
 
         // Generate blocks
         for (int row = 0; row < rows; row++)
@@ -328,9 +344,11 @@ public class BoardManager : MonoBehaviour
     /// </summary>
     private Vector3 GetWorldPosition(int row, int col)
     {
-        float totalWidth = columns * (blockSize + blockSpacing) - blockSpacing;
-        float totalHeight = rows * (blockSize + blockSpacing) - blockSpacing;
-        Vector3 startPos = new Vector3(-totalWidth / 2f, -totalHeight / 2f, 0);
+        // Use the same centering calculation as GenerateBoard()
+        float centerOffsetX = ((columns - 1) * (blockSize + blockSpacing)) / 2f;
+        float centerOffsetY = ((rows - 1) * (blockSize + blockSpacing)) / 2f;
+        
+        Vector3 startPos = new Vector3(-centerOffsetX, -centerOffsetY, 0);
 
         return startPos + new Vector3(
             col * (blockSize + blockSpacing),
