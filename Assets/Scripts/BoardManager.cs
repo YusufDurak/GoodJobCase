@@ -89,12 +89,60 @@ public class BoardManager : MonoBehaviour
         
         Vector3 startPos = new Vector3(-centerOffsetX, -centerOffsetY, 0);
 
+        // Resize board frame if it exists
+        ResizeBoardFrame(totalWidth, totalHeight);
+
         // Generate blocks
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < columns; col++)
             {
                 CreateBlockAt(row, col, startPos);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Resize the board frame to fit the grid with padding
+    /// </summary>
+    private void ResizeBoardFrame(float gridWidth, float gridHeight)
+    {
+        // Find the boardFrame child SpriteRenderer
+        Transform frameTransform = transform.Find("boardFrame");
+        if (frameTransform == null)
+        {
+            // Try case-insensitive search
+            foreach (Transform child in transform)
+            {
+                if (child.name.ToLower() == "boardframe")
+                {
+                    frameTransform = child;
+                    break;
+                }
+            }
+        }
+
+        if (frameTransform != null)
+        {
+            SpriteRenderer boardFrame = frameTransform.GetComponent<SpriteRenderer>();
+            if (boardFrame != null)
+            {
+                // Add padding around the grid
+                float framePadding = 0.25f;
+                float frameWidth = gridWidth + (framePadding * 2f);
+                float frameHeight = gridHeight + (framePadding * 2f);
+
+                // Set the sprite size
+                boardFrame.size = new Vector2(frameWidth, frameHeight);
+
+                // Ensure frame is behind blocks
+                boardFrame.sortingOrder = -1;
+
+                Debug.Log($"Board frame resized to: {frameWidth} x {frameHeight}");
+            }
+            else
+            {
+                Debug.LogWarning("boardFrame object found but has no SpriteRenderer component!");
             }
         }
     }
@@ -235,6 +283,17 @@ public class BoardManager : MonoBehaviour
     private IEnumerator DestroyMatchedBlocksSequence(List<Block> blocksToDestroy)
     {
         isProcessing = true;
+
+        // Screen shake for large groups (> 5 blocks)
+        if (blocksToDestroy.Count > 5 && mainCamera != null)
+        {
+            Vector3 originalCameraPos = mainCamera.transform.position;
+            mainCamera.transform.DOShakePosition(0.4f, 0.15f, 30)
+                .OnComplete(() => {
+                    // Ensure camera returns to original position
+                    mainCamera.transform.position = originalCameraPos;
+                });
+        }
 
         // Wait for destruction delay
         yield return new WaitForSeconds(destroyDelay);

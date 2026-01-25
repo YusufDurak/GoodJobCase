@@ -1,208 +1,75 @@
-# 🎮 Unity Collapse/Blast Game - Technical Case Study
+Developed for: Good Job Games Summer Internship Case Engine: Unity 2022.3 LTS Focus: Performance, Algorithm Design, Game Feel
 
-## Overview
-A high-performance mobile tile-matching game built for Unity with emphasis on optimization and clean architecture.
+##Overview
 
-## ✨ Features
+This project is a technical implementation of the core "Blast" mechanic found in top-tier puzzle games. The primary goal was to build a robust, scalable foundation that prioritizes mobile performance and memory management while delivering a satisfying "juicy" gameplay experience.
 
-### Core Gameplay
-- ✅ Configurable M×N grid (2-10 rows/columns)
-- ✅ K color types (1-6 colors)
-- ✅ Tap to match groups of 2+ connected blocks
-- ✅ Gravity system with smooth animations
-- ✅ Dynamic icon system based on group size
-- ✅ Smart deadlock detection and shuffle
+Technical Architecture & Decisions
+1. Zero-Allocation Object Pooling
+The case documentation emphasized CPU/GPU optimization. To avoid the performance cost of Unity's Instantiate and Destroy calls during gameplay: I implemented a custom BlockPool system. Blocks are pre-allocated at initialization. During gameplay, blocks are recycled (deactivated/activated), ensuring zero Garbage Collection allocation during the core loop.
 
-### Technical Highlights
-- 🚀 **Object Pooling**: Zero runtime allocation for blocks
-- 🔍 **BFS Flood Fill**: Efficient O(N) matching algorithm
-- 🎬 **DOTween Integration**: Smooth, performant animations
-- 📊 **Memory Optimized**: Reusable collections, minimal GC
-- 🎯 **Smart Shuffle**: Guarantees valid moves without brute force
+2. Matching Algorithm: BFS over Recursion
+For the color matching logic (Flood Fill), I chose Breadth-First Search (BFS) using a Queue instead of a recursive Depth-First Search (DFS). Why? Recursion can lead to Stack Overflow errors on larger grids (e.g., 10x10 or larger custom sizes). BFS is iterative, safer for memory, and more performant on mobile devices.
 
-## 🏗️ Architecture
+3. "Smart" Deadlock Shuffle
+To solve the "No Moves" situation, I avoided the naive approach of "blindly shuffling until a match is found" as it relies on luck and can cause infinite loops. 
 
-```
-BoardManager (Singleton pattern)
-├── Grid Management
-├── Input Handling
-├── Match Detection (BFS)
-├── Gravity System
-└── Deadlock Detection
+My Solution (Deterministic):
 
-BlockPool (Object Pool)
-├── Block Creation
-├── Block Reuse
-└── Memory Management
+Detect Deadlock (scan grid for any group < 2).
 
-Block (Entity)
-├── Visual State
-├── Animation Control
-└── Grid Position
-```
+Collect all active blocks and shuffle their data.
 
-## 📊 Performance Metrics
+Force a Match: Manually place a pair of matching colors at a random coordinate to guarantee at least one valid move.
 
-### Memory
-- **Object Pooling**: ~100 pre-allocated blocks
-- **Zero GC** during gameplay (after initialization)
-- **Reusable Collections**: Lists, Queues, HashSets
+Update the visual state.
 
-### CPU
-- **BFS Complexity**: O(N) where N = grid size
-- **Update Icons**: O(N) with caching
-- **Deadlock Check**: O(N × K) worst case
+4. Visual Feedback (The "Juice")
 
-### Optimizations
-1. Struct-based GridPosition (value type)
-2. Class-level collections avoid per-frame allocation
-3. Group size caching prevents redundant calculations
-4. Tween management prevents memory leaks
+To elevate the prototype to a polished feel:
 
-## 🎯 Adjustable Parameters
+DOTween Integration: Used for smooth falling animations (DOLocalMove) and spawn punches (DOScale).
 
-| Parameter | Range | Description |
-|-----------|-------|-------------|
-| M (Rows) | 2-10 | Grid height |
-| N (Columns) | 2-10 | Grid width |
-| K (Colors) | 1-6 | Number of block types |
-| A (Threshold) | Any | Icon1 group size |
-| B (Threshold) | Any | Icon2 group size |
-| C (Threshold) | Any | Icon3 group size |
+Dynamic Frame: Implemented a 9-Slice scalable frame that automatically adjusts to the M x N grid dimensions.
 
-## 📁 File Structure
+Responsive Camera: The camera automatically calculates the required orthographic size to center the grid regardless of the aspect ratio.
 
-```
-Assets/
-├── Scripts/
-│   ├── BlockData.cs         # Data structures
-│   ├── Block.cs             # Block entity
-│   ├── BlockPool.cs         # Object pooling
-│   └── BoardManager.cs      # Core game logic
-├── Prefabs/
-│   └── Block.prefab         # Block prefab
-└── Sprites/
-    └── [Color folders]      # Sprite assets
-```
+##Features
 
-## 🚀 Quick Start
+Configurable Grid: M (Rows), N (Cols), and K (Colors) are fully adjustable via Inspector.
 
-See **UNITY_SETUP_GUIDE.md** for detailed setup instructions.
+Dynamic Icons: Blocks change their sprites (Default, Icon1, Icon2, Icon3) based on the connected group size (Thresholds A, B, C).
 
-### Quick Setup:
-1. Install DOTween (Package Manager)
-2. Import all scripts to `Assets/Scripts/`
-3. Create Block prefab with SpriteRenderer + BoxCollider2D
-4. Create GameBoard GameObject with BoardManager + BlockPool
-5. Assign references in Inspector
-6. Press Play!
+Input System: Utilized the legacy Input Manager for simplicity and reliability in touch/click detection.
 
-## 🎮 Gameplay Rules
+Particle Effects: Optimized particle system that simulates explosions using the block's color data.
 
-1. **Matching**: Click any block to select its connected group
-2. **Destruction**: Groups of 2+ blocks are destroyed
-3. **Gravity**: Blocks fall down to fill empty spaces
-4. **Spawning**: New blocks spawn from the top
-5. **Dynamic Icons**: Icons change based on group size thresholds
-6. **Deadlock**: Board auto-shuffles when no moves are available
+##Project Structure
 
-## 🧪 Algorithm Details
+Scripts/Core:
 
-### Flood Fill (BFS)
-```csharp
-// Efficient breadth-first search
-// Time: O(N), Space: O(N)
-// Where N = number of grid cells
-```
+BoardManager.cs: Handles the grid logic, input, and game state.
 
-### Smart Shuffle
-```csharp
-// Strategic shuffle with guaranteed valid moves
-// 1. Randomize positions
-// 2. Force create at least one match
-// 3. Verify with deadlock check
-// Max attempts: 100
-```
+BlockPool.cs: Manages memory and object recycling.
 
-### Group Size Calculation
-```csharp
-// Cached per update cycle
-// Prevents redundant BFS calls
-// Invalidated after gravity/shuffle
-```
+Scripts/Entities:
 
-## 📱 Mobile Considerations
+Block.cs: Handles individual block visuals and animations.
 
-- **Target**: 60 FPS on mid-range devices
-- **Resolution**: Adaptive (uses orthographic camera)
-- **Input**: Touch-friendly (large tap targets)
-- **Memory**: <50MB heap allocation
-- **Battery**: Minimal CPU usage during idle
+Scripts/Utils:
 
-## 🎨 Visual Design
+AudioManager.cs: Manages SFX with pitch randomization for variety.
 
-### Icon System
-- **Default**: Group ≤ A
-- **Icon 1**: Group > A
-- **Icon 2**: Group > B  
-- **Icon 3**: Group > C
+VFXManager.cs: Handles particle spawning without instantiation spam.
 
-### Animations (DOTween)
-- **Spawn**: Scale punch (0 → 1)
-- **Click**: Scale punch feedback
-- **Fall**: Smooth downward motion (Ease.InQuad)
-- **Destroy**: Instant (with delay)
+##How to Test
 
-## 🐛 Known Limitations
+Open the GameScene.
 
-1. **Very Small Grids**: 2×2 with 6 colors may deadlock frequently
-2. **Very Large Grids**: 10×10 may need larger object pool
-3. **Color Swapping**: Not implemented (could be added)
-4. **Combos**: Not tracked (could be added)
+Select the GameBoard object.
 
-## 🔮 Future Enhancements
+Adjust Rows, Columns, and Colors in the Inspector to test edge cases (e.g., 2x2 or 10x10).
 
-- [ ] Power-ups (bombs, rockets, etc.)
-- [ ] Score and combo system
-- [ ] Level progression
-- [ ] Particle effects
-- [ ] Sound effects
-- [ ] Persistent saves
-- [ ] Leaderboards
-- [ ] Tutorial system
+Press Play.
 
-## 📖 Code Quality
-
-- **Clean Code**: Well-documented with XML comments
-- **SOLID Principles**: Single responsibility per class
-- **Performance**: Optimized for mobile
-- **Maintainable**: Easy to extend and modify
-- **Testable**: Decoupled architecture
-
-## 🏆 Technical Requirements Met
-
-✅ Grid generation (M×N adjustable)  
-✅ K colors (1-6 adjustable)  
-✅ Match detection (2+ connected blocks)  
-✅ Gravity system  
-✅ Dynamic icons (A, B, C thresholds)  
-✅ Deadlock detection  
-✅ Smart shuffle (guaranteed moves)  
-✅ Object pooling  
-✅ BFS flood fill  
-✅ DOTween animations  
-✅ Performance optimized  
-
-## 📄 License
-
-This is a technical case study project. Use as needed.
-
-## 🙏 Acknowledgments
-
-- **DOTween**: Animation library by Demigiant
-- **Unity**: Game engine
-- **Reference**: Toon Blast / Toy Blast style gameplay
-
----
-
-**Built with ❤️ for mobile game performance**
+Notes: This project was a great opportunity to demonstrate Data-Oriented thinking in Unity. By separating the logic (Board) from the view (Block), the system remains modular and easy to extend (e.g., adding Power-ups or Level goals).
