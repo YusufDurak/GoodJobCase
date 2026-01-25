@@ -1,10 +1,6 @@
 using UnityEngine;
 using TMPro;
 
-/// <summary>
-/// Performance monitoring tool for debugging
-/// Shows FPS, memory usage, and object counts
-/// </summary>
 public class PerformanceMonitor : MonoBehaviour
 {
     [Header("UI")]
@@ -21,7 +17,6 @@ public class PerformanceMonitor : MonoBehaviour
     {
         if (!showStats || statsText == null) return;
 
-        // Calculate FPS
         frameCount++;
         deltaTime += Time.unscaledDeltaTime;
         timer += Time.unscaledDeltaTime;
@@ -39,16 +34,12 @@ public class PerformanceMonitor : MonoBehaviour
 
     private void UpdateStatsDisplay()
     {
-        // Memory info
         long totalMemory = System.GC.GetTotalMemory(false);
         float memoryMB = totalMemory / (1024f * 1024f);
-
-        // Object counts
         
         int totalObjects = FindObjectsByType<GameObject>(FindObjectsSortMode.None).Length;
         int activeBlocks = FindObjectsByType<Block>(FindObjectsSortMode.None).Length;
 
-        // Build stats string
         string stats = $"FPS: {fps:F1}\n";
         stats += $"Memory: {memoryMB:F2} MB\n";
         stats += $"Objects: {totalObjects}\n";
@@ -56,7 +47,6 @@ public class PerformanceMonitor : MonoBehaviour
 
         statsText.text = stats;
 
-        // Color code FPS
         if (fps >= 55)
             statsText.color = Color.green;
         else if (fps >= 30)
@@ -65,9 +55,6 @@ public class PerformanceMonitor : MonoBehaviour
             statsText.color = Color.red;
     }
 
-    /// <summary>
-    /// Toggle stats display with F1 key
-    /// </summary>
     private void LateUpdate()
     {
         if (Input.GetKeyDown(KeyCode.F1))

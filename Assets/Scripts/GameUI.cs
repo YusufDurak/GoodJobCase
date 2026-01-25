@@ -2,10 +2,6 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
-/// <summary>
-/// Optional UI manager for testing and gameplay feedback
-/// Displays score, moves, and provides restart button
-/// </summary>
 public class GameUI : MonoBehaviour
 {
     [Header("UI References")]
@@ -35,15 +31,11 @@ public class GameUI : MonoBehaviour
         UpdateUI();
     }
 
-    /// <summary>
-    /// Call this when blocks are destroyed
-    /// </summary>
     public void OnBlocksDestroyed(int blockCount)
     {
         moveCount++;
         currentCombo++;
         
-        // Calculate score: base points + combo bonus
         int baseScore = blockCount * pointsPerBlock;
         int comboBonus = currentCombo * comboMultiplier;
         int totalPoints = baseScore + comboBonus;
@@ -51,7 +43,6 @@ public class GameUI : MonoBehaviour
         currentScore += totalPoints;
         UpdateUI();
         
-        // Show combo feedback
         if (currentCombo > 1 && comboText != null)
         {
             comboText.text = $"COMBO x{currentCombo}!";
@@ -60,9 +51,6 @@ public class GameUI : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Reset combo when no cascades happen
-    /// </summary>
     public void ResetCombo()
     {
         currentCombo = 0;

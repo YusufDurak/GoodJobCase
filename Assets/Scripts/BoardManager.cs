@@ -3,10 +3,6 @@ using System.Collections.Generic;
 using UnityEngine;
 using DG.Tweening;
 
-/// <summary>
-/// Main board manager handling grid generation, matching, gravity, and shuffle
-/// Optimized for performance with object pooling and efficient algorithms
-/// </summary>
 public class BoardManager : MonoBehaviour
 {
     [Header("Grid Settings")]
@@ -32,17 +28,13 @@ public class BoardManager : MonoBehaviour
     [SerializeField] private BlockPool blockPool;
     [SerializeField] private Camera mainCamera;
 
-    // Grid data structure
     private Block[,] grid;
     private bool isProcessing = false;
     
-    // Reusable collections to minimize GC
     private List<Block> matchedBlocks = new List<Block>(100);
     private Queue<GridPosition> bfsQueue = new Queue<GridPosition>(100);
     private HashSet<GridPosition> visited = new HashSet<GridPosition>();
     private List<Block> tempBlockList = new List<Block>(100);
-
-    // Cache for group size calculations
     private Dictionary<Block, int> groupSizeCache = new Dictionary<Block, int>(100);
 
     private void Start()
@@ -50,19 +42,11 @@ public class BoardManager : MonoBehaviour
         if (mainCamera == null)
             mainCamera = Camera.main;
 
-        // Initialize pool
         blockPool.Initialize(transform);
-        
-        // Generate initial board
         GenerateBoard();
-        
-        // Update all icon states
         UpdateAllBlockIcons();
     }
 
-    /// <summary>
-    /// Get the board dimensions in world space (for camera fitting)
-    /// </summary>
     public Vector2 GetBoardDimensions()
     {
         float width = columns * (blockSize + blockSpacing) - blockSpacing;
@@ -70,29 +54,20 @@ public class BoardManager : MonoBehaviour
         return new Vector2(width, height);
     }
 
-    /// <summary>
-    /// Generate the initial game board
-    /// </summary>
     private void GenerateBoard()
     {
-        // Initialize grid array
         grid = new Block[rows, columns];
 
-        // Calculate board centering
         float totalWidth = columns * (blockSize + blockSpacing) - blockSpacing;
         float totalHeight = rows * (blockSize + blockSpacing) - blockSpacing;
         
-        // Fix: Center the grid properly by accounting for block positions
-        // Blocks go from index 0 to (columns-1), center should be at the midpoint
         float centerOffsetX = ((columns - 1) * (blockSize + blockSpacing)) / 2f;
         float centerOffsetY = ((rows - 1) * (blockSize + blockSpacing)) / 2f;
         
         Vector3 startPos = new Vector3(-centerOffsetX, -centerOffsetY, 0);
 
-        // Resize board frame if it exists
         ResizeBoardFrame(totalWidth, totalHeight);
 
-        // Generate blocks
         for (int row = 0; row < rows; row++)
         {
             for (int col = 0; col < columns; col++)
@@ -102,16 +77,11 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Resize the board frame to fit the grid with padding
-    /// </summary>
     private void ResizeBoardFrame(float gridWidth, float gridHeight)
     {
-        // Find the boardFrame child SpriteRenderer
         Transform frameTransform = transform.Find("boardFrame");
         if (frameTransform == null)
         {
-            // Try case-insensitive search
             foreach (Transform child in transform)
             {
                 if (child.name.ToLower() == "boardframe")
@@ -127,35 +97,21 @@ public class BoardManager : MonoBehaviour
             SpriteRenderer boardFrame = frameTransform.GetComponent<SpriteRenderer>();
             if (boardFrame != null)
             {
-                // Add padding around the grid
                 float framePadding = 0.25f;
                 float frameWidth = gridWidth + (framePadding * 2f);
                 float frameHeight = gridHeight + (framePadding * 2f);
 
-                // Set the sprite size
                 boardFrame.size = new Vector2(frameWidth, frameHeight);
-
-                // Ensure frame is behind blocks
                 boardFrame.sortingOrder = -1;
-
-                Debug.Log($"Board frame resized to: {frameWidth} x {frameHeight}");
-            }
-            else
-            {
-                Debug.LogWarning("boardFrame object found but has no SpriteRenderer component!");
             }
         }
     }
 
-    /// <summary>
-    /// Create a block at the specified grid position
-    /// </summary>
     private void CreateBlockAt(int row, int col, Vector3 startPos)
     {
         Block block = blockPool.GetBlock();
         block.transform.SetParent(transform);
 
-        // Calculate world position
         Vector3 worldPos = startPos + new Vector3(
             col * (blockSize + blockSpacing),
             row * (blockSize + blockSpacing),
@@ -163,7 +119,6 @@ public class BoardManager : MonoBehaviour
         );
         block.transform.localPosition = worldPos;
 
-        // Random color
         int colorID = Random.Range(0, Mathf.Min(numberOfColors, blockColors.Length));
         GridPosition gridPos = new GridPosition(row, col);
         
@@ -171,9 +126,6 @@ public class BoardManager : MonoBehaviour
         grid[row, col] = block;
     }
 
-    /// <summary>
-    /// Handle input for block selection
-    /// </summary>
     private void Update()
     {
         if (isProcessing) return;
@@ -190,9 +142,6 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Get block at world position using raycast
-    /// </summary>
     private Block GetBlockAtPosition(Vector2 worldPos)
     {
         RaycastHit2D hit = Physics2D.Raycast(worldPos, Vector2.zero);
@@ -203,30 +152,21 @@ public class BoardManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Handle block click event
-    /// </summary>
     private void OnBlockClicked(Block block)
     {
-        // Find connected group using flood fill
         matchedBlocks.Clear();
         FloodFill(block.GridPos, block.ColorID, matchedBlocks);
 
-        // Check if group is valid (2 or more)
         if (matchedBlocks.Count >= 2)
         {
-            // Play feedback on clicked block
             block.PlayClickFeedback();
-            AudioManager.Instance.PlayPop();
+            if (AudioManager.Instance != null)
+                AudioManager.Instance.PlayPop();
             
-            // Start destruction sequence
             StartCoroutine(DestroyMatchedBlocksSequence(matchedBlocks));
         }
     }
 
-    /// <summary>
-    /// Efficient BFS flood fill algorithm to find connected blocks
-    /// </summary>
     private void FloodFill(GridPosition startPos, int targetColor, List<Block> result)
     {
         visited.Clear();
@@ -235,7 +175,6 @@ public class BoardManager : MonoBehaviour
         bfsQueue.Enqueue(startPos);
         visited.Add(startPos);
 
-        // Directions: up, down, left, right
         int[] dRow = { -1, 1, 0, 0 };
         int[] dCol = { 0, 0, -1, 1 };
 
@@ -248,7 +187,6 @@ public class BoardManager : MonoBehaviour
             {
                 result.Add(currentBlock);
 
-                // Check all 4 neighbors
                 for (int i = 0; i < 4; i++)
                 {
                     int newRow = current.Row + dRow[i];
@@ -269,61 +207,43 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Check if position is within grid bounds
-    /// </summary>
     private bool IsValidPosition(int row, int col)
     {
         return row >= 0 && row < rows && col >= 0 && col < columns;
     }
 
-    /// <summary>
-    /// Sequence to destroy matched blocks and handle gravity
-    /// </summary>
     private IEnumerator DestroyMatchedBlocksSequence(List<Block> blocksToDestroy)
     {
         isProcessing = true;
 
-        // Screen shake for large groups (> 5 blocks)
         if (blocksToDestroy.Count > 5 && mainCamera != null)
         {
             Vector3 originalCameraPos = mainCamera.transform.position;
             mainCamera.transform.DOShakePosition(0.4f, 0.15f, 30)
                 .OnComplete(() => {
-                    // Ensure camera returns to original position
                     mainCamera.transform.position = originalCameraPos;
                 });
         }
 
-        // Wait for destruction delay
         yield return new WaitForSeconds(destroyDelay);
 
-        // Remove blocks from grid and play particle effects
         foreach (Block block in blocksToDestroy)
         {
-            // Play explosion particle effect (if VFXManager exists)
             if (VFXManager.Instance != null)
             {
-                VFXManager.Instance.PlayExplosion(
-                    block.transform.position, 
-                    block.CurrentColor  // Use cached color instead of GetComponent
-                );
+                VFXManager.Instance.PlayExplosion(block.transform.position, block.CurrentColor);
             }
     
             grid[block.GridPos.Row, block.GridPos.Column] = null;
         }
         blockPool.ReturnBlocks(blocksToDestroy);
 
-        // Apply gravity and wait for animations
         yield return StartCoroutine(ApplyGravity());
 
-        // Update all block icons after gravity
         UpdateAllBlockIcons();
 
-        // Check for deadlock
         if (IsDeadlocked())
         {
-            Debug.Log("Deadlock detected! Shuffling board...");
             yield return StartCoroutine(SmartShuffle());
             UpdateAllBlockIcons();
         }
@@ -331,43 +251,33 @@ public class BoardManager : MonoBehaviour
         isProcessing = false;
     }
 
-    /// <summary>
-    /// Apply gravity: make blocks fall and spawn new ones
-    /// </summary>
     private IEnumerator ApplyGravity()
     {
         bool anyMovement = false;
-        List<Tween> activeTweens = new List<Tween>();
 
-        // Process each column
         for (int col = 0; col < columns; col++)
         {
             int emptyRow = 0;
 
-            // Move existing blocks down
             for (int row = 0; row < rows; row++)
             {
                 if (grid[row, col] != null && grid[row, col].IsActive)
                 {
                     if (emptyRow != row)
                     {
-                        // Move block down
                         Block block = grid[row, col];
                         grid[row, col] = null;
                         grid[emptyRow, col] = block;
                         block.SetGridPosition(new GridPosition(emptyRow, col));
 
-                        // Animate fall
                         Vector3 targetPos = GetWorldPosition(emptyRow, col);
-                        Tween tween = block.AnimateFall(targetPos, fallDuration);
-                        activeTweens.Add(tween);
+                        block.AnimateFall(targetPos, fallDuration);
                         anyMovement = true;
                     }
                     emptyRow++;
                 }
             }
 
-            // Spawn new blocks from top
             for (int row = emptyRow; row < rows; row++)
             {
                 Block newBlock = blockPool.GetBlock();
@@ -376,34 +286,26 @@ public class BoardManager : MonoBehaviour
                 int colorID = Random.Range(0, Mathf.Min(numberOfColors, blockColors.Length));
                 GridPosition gridPos = new GridPosition(row, col);
 
-                // Start position above the grid
                 Vector3 startPos = GetWorldPosition(rows, col);
                 newBlock.transform.localPosition = startPos;
 
                 newBlock.Initialize(colorID, gridPos, blockColors[colorID]);
                 grid[row, col] = newBlock;
 
-                // Animate fall
                 Vector3 targetPos = GetWorldPosition(row, col);
-                Tween tween = newBlock.AnimateFall(targetPos, fallDuration);
-                activeTweens.Add(tween);
+                newBlock.AnimateFall(targetPos, fallDuration);
                 anyMovement = true;
             }
         }
 
-        // Wait for all animations to complete
         if (anyMovement)
         {
             yield return new WaitForSeconds(fallDuration);
         }
     }
 
-    /// <summary>
-    /// Get world position for a grid cell
-    /// </summary>
     private Vector3 GetWorldPosition(int row, int col)
     {
-        // Use the same centering calculation as GenerateBoard()
         float centerOffsetX = ((columns - 1) * (blockSize + blockSpacing)) / 2f;
         float centerOffsetY = ((rows - 1) * (blockSize + blockSpacing)) / 2f;
         
@@ -416,9 +318,6 @@ public class BoardManager : MonoBehaviour
         );
     }
 
-    /// <summary>
-    /// Update all block sprites based on their group sizes
-    /// </summary>
     private void UpdateAllBlockIcons()
     {
         groupSizeCache.Clear();
@@ -432,19 +331,16 @@ public class BoardManager : MonoBehaviour
                 {
                     if (!groupSizeCache.ContainsKey(block))
                     {
-                        // Calculate group size
                         tempBlockList.Clear();
                         FloodFill(block.GridPos, block.ColorID, tempBlockList);
                         int groupSize = tempBlockList.Count;
 
-                        // Cache for all blocks in group
                         foreach (Block b in tempBlockList)
                         {
                             groupSizeCache[b] = groupSize;
                         }
                     }
 
-                    // Update sprite
                     int size = groupSizeCache[block];
                     block.UpdateSpriteForGroupSize(size, thresholdA, thresholdB, thresholdC);
                 }
@@ -452,9 +348,6 @@ public class BoardManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Check if the board is in a deadlock state (no valid moves)
-    /// </summary>
     private bool IsDeadlocked()
     {
         for (int row = 0; row < rows; row++)
@@ -468,21 +361,16 @@ public class BoardManager : MonoBehaviour
                     FloodFill(block.GridPos, block.ColorID, tempBlockList);
                     if (tempBlockList.Count >= 2)
                     {
-                        return false; // Found valid move
+                        return false;
                     }
                 }
             }
         }
-        return true; // No valid moves
+        return true;
     }
 
-    /// <summary>
-    /// Smart shuffle algorithm that guarantees at least one valid move
-    /// Uses a strategic approach instead of random shuffling
-    /// </summary>
     private IEnumerator SmartShuffle()
     {
-        // Collect all active blocks
         List<Block> allBlocks = new List<Block>();
         for (int row = 0; row < rows; row++)
         {
@@ -495,7 +383,6 @@ public class BoardManager : MonoBehaviour
             }
         }
 
-        // Strategy: Create guaranteed matches by placing same-colored blocks adjacent
         int attempts = 0;
         const int maxAttempts = 100;
         bool validShuffleFound = false;
@@ -504,12 +391,10 @@ public class BoardManager : MonoBehaviour
         {
             attempts++;
 
-            // Shuffle block positions
             for (int i = allBlocks.Count - 1; i > 0; i--)
             {
                 int j = Random.Range(0, i + 1);
                 
-                // Swap grid positions
                 Block blockA = allBlocks[i];
                 Block blockB = allBlocks[j];
                 
@@ -521,45 +406,33 @@ public class BoardManager : MonoBehaviour
                 grid[blockB.GridPos.Row, blockB.GridPos.Column] = blockB;
             }
 
-            // Force create at least one match by swapping colors
             if (allBlocks.Count >= 2)
             {
                 int idx1 = Random.Range(0, allBlocks.Count);
-                int idx2 = Random.Range(0, allBlocks.Count);
-                
-                // Ensure they're adjacent or close
                 Block b1 = allBlocks[idx1];
                 Block b2 = FindAdjacentBlock(b1);
                 
                 if (b2 != null)
                 {
-                    int tempColor = b1.ColorID;
                     b1.Initialize(b2.ColorID, b1.GridPos, blockColors[b2.ColorID]);
                 }
             }
 
-            // Verify at least one valid move exists
             if (!IsDeadlocked())
             {
                 validShuffleFound = true;
             }
         }
 
-        // Animate blocks to their new positions
-        List<Tween> tweens = new List<Tween>();
         foreach (Block block in allBlocks)
         {
             Vector3 targetPos = GetWorldPosition(block.GridPos.Row, block.GridPos.Column);
-            Tween tween = block.AnimateFall(targetPos, fallDuration);
-            tweens.Add(tween);
+            block.AnimateFall(targetPos, fallDuration);
         }
 
         yield return new WaitForSeconds(fallDuration);
     }
 
-    /// <summary>
-    /// Find an adjacent block to the given block
-    /// </summary>
     private Block FindAdjacentBlock(Block block)
     {
         int[] dRow = { -1, 1, 0, 0 };
@@ -582,9 +455,6 @@ public class BoardManager : MonoBehaviour
         return null;
     }
 
-    /// <summary>
-    /// Regenerate entire board (for testing or restart)
-    /// </summary>
     public void RegenerateBoard()
     {
         if (isProcessing) return;
@@ -597,7 +467,6 @@ public class BoardManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Kill all active tweens
         DOTween.KillAll();
     }
 }

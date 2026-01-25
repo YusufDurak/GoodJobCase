@@ -1,10 +1,6 @@
 using UnityEngine;
 using DG.Tweening;
 
-/// <summary>
-/// Represents a single block on the game board
-/// Handles visuals and animations
-/// </summary>
 [RequireComponent(typeof(SpriteRenderer))]
 public class Block : MonoBehaviour
 {
@@ -38,9 +34,6 @@ public class Block : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Initialize the block with color and position
-    /// </summary>
     public void Initialize(int colorID, GridPosition gridPos, BlockColorData colorData)
     {
         ColorID = colorID;
@@ -52,30 +45,21 @@ public class Block : MonoBehaviour
         spriteRenderer.enabled = true;
         boxCollider.enabled = true;
         
-        // Cache the sprite color for VFX (avoid GetComponent calls)
         CurrentColor = spriteRenderer.color;
         
-        // Reset transform
         transform.localScale = Vector3.zero;
         
-        // Spawn animation
         KillScaleTween();
         scaleTween = transform.DOScale(Vector3.one, spawnPunchDuration)
             .SetEase(Ease.OutBack)
             .SetUpdate(UpdateType.Normal, true);
     }
 
-    /// <summary>
-    /// Update the block's grid position
-    /// </summary>
     public void SetGridPosition(GridPosition newPos)
     {
         GridPos = newPos;
     }
 
-    /// <summary>
-    /// Update the sprite based on group size
-    /// </summary>
     public void UpdateSpriteForGroupSize(int groupSize, int thresholdA, int thresholdB, int thresholdC)
     {
         if (!IsActive || currentColorData == null) return;
@@ -96,14 +80,9 @@ public class Block : MonoBehaviour
         }
 
         spriteRenderer.sprite = newSprite;
-        
-        // Update cached color when sprite changes
         CurrentColor = spriteRenderer.color;
     }
 
-    /// <summary>
-    /// Animate block falling to new position
-    /// </summary>
     public Tween AnimateFall(Vector3 targetPosition, float duration)
     {
         KillMoveTween();
@@ -113,9 +92,6 @@ public class Block : MonoBehaviour
         return currentTween;
     }
 
-    /// <summary>
-    /// Play click feedback animation
-    /// </summary>
     public void PlayClickFeedback()
     {
         KillScaleTween();
@@ -123,9 +99,6 @@ public class Block : MonoBehaviour
             .SetUpdate(UpdateType.Normal, true);
     }
 
-    /// <summary>
-    /// Deactivate the block (return to pool)
-    /// </summary>
     public void Deactivate()
     {
         IsActive = false;
@@ -134,9 +107,6 @@ public class Block : MonoBehaviour
         boxCollider.enabled = false;
     }
 
-    /// <summary>
-    /// Kill movement tween
-    /// </summary>
     private void KillMoveTween()
     {
         if (currentTween != null && currentTween.IsActive())
@@ -146,9 +116,6 @@ public class Block : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Kill scale tween
-    /// </summary>
     private void KillScaleTween()
     {
         if (scaleTween != null && scaleTween.IsActive())
@@ -158,9 +125,6 @@ public class Block : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Kill all active tweens on this block
-    /// </summary>
     public void KillAllTweens()
     {
         KillMoveTween();

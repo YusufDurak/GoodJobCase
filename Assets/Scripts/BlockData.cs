@@ -1,21 +1,15 @@
 using UnityEngine;
 
-/// <summary>
-/// Data structure to hold block color type information
-/// </summary>
 [System.Serializable]
 public class BlockColorData
 {
     public int ColorID;
     public Sprite DefaultSprite;
-    public Sprite Icon1Sprite;  // Group size > A
-    public Sprite Icon2Sprite;  // Group size > B
-    public Sprite Icon3Sprite;  // Group size > C
+    public Sprite Icon1Sprite;
+    public Sprite Icon2Sprite;
+    public Sprite Icon3Sprite;
 }
 
-/// <summary>
-/// Grid position data structure
-/// </summary>
 public struct GridPosition
 {
     public int Row;

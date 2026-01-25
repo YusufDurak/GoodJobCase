@@ -1,9 +1,6 @@
 using UnityEngine;
 using UnityEditor;
 
-/// <summary>
-/// Validator for GameConfig ScriptableObjects
-/// </summary>
 [CustomEditor(typeof(GameConfig))]
 public class GameConfigValidator : Editor
 {
@@ -11,13 +8,11 @@ public class GameConfigValidator : Editor
     {
         GameConfig config = (GameConfig)target;
 
-        // Draw default inspector
         DrawDefaultInspector();
 
         EditorGUILayout.Space(10);
         EditorGUILayout.LabelField("Configuration Analysis", EditorStyles.boldLabel);
 
-        // Validate configuration
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
 
         bool isValid = config.IsValidConfiguration();
@@ -30,7 +25,6 @@ public class GameConfigValidator : Editor
             EditorGUILayout.HelpBox("⚠️ Configuration may cause issues", MessageType.Warning);
         }
 
-        // Show calculated values
         int totalCells = config.rows * config.columns;
         int recommendedPoolSize = config.GetRecommendedPoolSize();
 
@@ -46,7 +40,6 @@ public class GameConfigValidator : Editor
         EditorGUILayout.LabelField($"  B (Icon 2): {config.thresholdB}+");
         EditorGUILayout.LabelField($"  C (Icon 3): {config.thresholdC}+");
 
-        // Check if thresholds are achievable
         int maxPossibleGroup = totalCells;
         if (config.thresholdC > maxPossibleGroup)
         {
@@ -56,7 +49,6 @@ public class GameConfigValidator : Editor
 
         EditorGUILayout.EndVertical();
 
-        // Performance rating
         EditorGUILayout.Space(5);
         EditorGUILayout.BeginVertical(EditorStyles.helpBox);
         EditorGUILayout.LabelField("Performance Rating:");
