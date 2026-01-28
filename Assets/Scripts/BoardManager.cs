@@ -154,6 +154,9 @@ public class BoardManager : MonoBehaviour
 
     private void OnBlockClicked(Block block)
     {
+        if (GameManager.Instance != null && GameManager.Instance.IsGameOver())
+            return;
+
         matchedBlocks.Clear();
         FloodFill(block.GridPos, block.ColorID, matchedBlocks);
 
@@ -162,6 +165,9 @@ public class BoardManager : MonoBehaviour
             block.PlayClickFeedback();
             if (AudioManager.Instance != null)
                 AudioManager.Instance.PlayPop();
+            
+            if (GameManager.Instance != null)
+                GameManager.Instance.DecreaseMove();
             
             StartCoroutine(DestroyMatchedBlocksSequence(matchedBlocks));
         }
@@ -226,6 +232,12 @@ public class BoardManager : MonoBehaviour
         }
 
         yield return new WaitForSeconds(destroyDelay);
+
+        if (GameManager.Instance != null)
+        {
+            int scoreAmount = blocksToDestroy.Count * 10;
+            GameManager.Instance.AddScore(scoreAmount);
+        }
 
         foreach (Block block in blocksToDestroy)
         {
