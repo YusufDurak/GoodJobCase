@@ -1,5 +1,7 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
+using DG.Tweening;
 
 public class GameManager : MonoBehaviour
 {
@@ -18,10 +20,22 @@ public class GameManager : MonoBehaviour
     [SerializeField] private GameObject winPanel;
     [SerializeField] private GameObject losePanel;
 
+    [Header("Button References")]
+    [SerializeField] private Button nextLevelButton;
+    [SerializeField] private Button restartButton;
+
     [Header("Level Progression")]
     [SerializeField] private int targetScoreIncrement = 300;
 
+    [Header("Animation Settings")]
+    [SerializeField] private float panelAnimDuration = 0.5f;
+    [SerializeField] private float buttonAnimDelay = 0.3f;
+
     private bool gameOver = false;
+    private RectTransform winPanelRect;
+    private RectTransform losePanelRect;
+    private CanvasGroup winPanelCanvasGroup;
+    private CanvasGroup losePanelCanvasGroup;
 
     private void Awake()
     {
@@ -34,6 +48,8 @@ public class GameManager : MonoBehaviour
             Destroy(gameObject);
             return;
         }
+
+        InitializePanelComponents();
     }
 
     private void Start()
@@ -41,7 +57,56 @@ public class GameManager : MonoBehaviour
         if (winPanel != null) winPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
 
+        SetupButtonListeners();
         UpdateUI();
+    }
+
+    private void InitializePanelComponents()
+    {
+        if (winPanel != null)
+        {
+            winPanelRect = winPanel.GetComponent<RectTransform>();
+            winPanelCanvasGroup = winPanel.GetComponent<CanvasGroup>();
+            if (winPanelCanvasGroup == null)
+            {
+                winPanelCanvasGroup = winPanel.AddComponent<CanvasGroup>();
+            }
+        }
+
+        if (losePanel != null)
+        {
+            losePanelRect = losePanel.GetComponent<RectTransform>();
+            losePanelCanvasGroup = losePanel.GetComponent<CanvasGroup>();
+            if (losePanelCanvasGroup == null)
+            {
+                losePanelCanvasGroup = losePanel.AddComponent<CanvasGroup>();
+            }
+        }
+    }
+
+    private void SetupButtonListeners()
+    {
+        if (nextLevelButton != null)
+        {
+            nextLevelButton.onClick.AddListener(OnNextLevelClicked);
+            AddButtonHoverEffect(nextLevelButton);
+        }
+
+        if (restartButton != null)
+        {
+            restartButton.onClick.AddListener(OnRestartClicked);
+            AddButtonHoverEffect(restartButton);
+        }
+    }
+
+    private void AddButtonHoverEffect(Button button)
+    {
+        RectTransform buttonRect = button.GetComponent<RectTransform>();
+        
+        button.onClick.AddListener(() => {
+            buttonRect.DOKill();
+            buttonRect.DOPunchScale(Vector3.one * 0.1f, 0.2f, 5, 0.5f);
+        });
     }
 
     public void AddScore(int amount)
@@ -50,6 +115,7 @@ public class GameManager : MonoBehaviour
 
         score += amount;
         UpdateUI();
+        AnimateScoreText();
 
         if (score >= targetScore)
         {
@@ -63,6 +129,7 @@ public class GameManager : MonoBehaviour
 
         movesLeft--;
         UpdateUI();
+        AnimateMovesText();
 
         if (movesLeft <= 0 && score < targetScore)
         {
@@ -75,7 +142,7 @@ public class GameManager : MonoBehaviour
         gameOver = true;
         if (winPanel != null)
         {
-            winPanel.SetActive(true);
+            ShowPanel(winPanel, winPanelRect, winPanelCanvasGroup, nextLevelButton);
         }
     }
 
@@ -84,8 +151,67 @@ public class GameManager : MonoBehaviour
         gameOver = true;
         if (losePanel != null)
         {
-            losePanel.SetActive(true);
+            ShowPanel(losePanel, losePanelRect, losePanelCanvasGroup, restartButton);
         }
+    }
+
+    private void ShowPanel(GameObject panel, RectTransform panelRect, CanvasGroup canvasGroup, Button button)
+    {
+        panel.SetActive(true);
+
+        if (panelRect != null && canvasGroup != null)
+        {
+            panelRect.localScale = Vector3.zero;
+            canvasGroup.alpha = 0f;
+
+            Sequence panelSequence = DOTween.Sequence();
+            panelSequence.Append(panelRect.DOScale(Vector3.one, panelAnimDuration).SetEase(Ease.OutBack));
+            panelSequence.Join(canvasGroup.DOFade(1f, panelAnimDuration * 0.5f));
+
+            if (button != null)
+            {
+                RectTransform buttonRect = button.GetComponent<RectTransform>();
+                buttonRect.localScale = Vector3.zero;
+                panelSequence.Append(buttonRect.DOScale(Vector3.one, 0.3f)
+                    .SetEase(Ease.OutBack)
+                    .SetDelay(buttonAnimDelay));
+            }
+        }
+    }
+
+    private void HidePanel(GameObject panel, RectTransform panelRect, CanvasGroup canvasGroup)
+    {
+        if (panelRect != null && canvasGroup != null)
+        {
+            Sequence hideSequence = DOTween.Sequence();
+            hideSequence.Append(panelRect.DOScale(Vector3.zero, 0.3f).SetEase(Ease.InBack));
+            hideSequence.Join(canvasGroup.DOFade(0f, 0.2f));
+            hideSequence.OnComplete(() => panel.SetActive(false));
+        }
+        else
+        {
+            panel.SetActive(false);
+        }
+    }
+
+    private void OnNextLevelClicked()
+    {
+        if (winPanel != null)
+        {
+            HidePanel(winPanel, winPanelRect, winPanelCanvasGroup);
+        }
+
+        DOVirtual.DelayedCall(0.4f, () => LoadNextLevel());
+    }
+
+    private void OnRestartClicked()
+    {
+        if (losePanel != null)
+        {
+            HidePanel(losePanel, losePanelRect, losePanelCanvasGroup);
+        }
+
+        DOVirtual.DelayedCall(0.4f, () => RestartLevel());
     }
 
     public void LoadNextLevel()
@@ -95,9 +221,6 @@ public class GameManager : MonoBehaviour
         score = 0;
         targetScore += targetScoreIncrement;
         gameOver = false;
-
-        if (winPanel != null) winPanel.SetActive(false);
-        if (losePanel != null) losePanel.SetActive(false);
 
         UpdateUI();
 
@@ -114,15 +237,30 @@ public class GameManager : MonoBehaviour
         score = 0;
         gameOver = false;
 
-        if (winPanel != null) winPanel.SetActive(false);
-        if (losePanel != null) losePanel.SetActive(false);
-
         UpdateUI();
 
         BoardManager boardManager = FindFirstObjectByType<BoardManager>();
         if (boardManager != null)
         {
             boardManager.RegenerateBoard();
+        }
+    }
+
+    private void AnimateScoreText()
+    {
+        if (scoreText != null)
+        {
+            scoreText.transform.DOKill();
+            scoreText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f);
+        }
+    }
+
+    private void AnimateMovesText()
+    {
+        if (movesText != null)
+        {
+            movesText.transform.DOKill();
+            movesText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f);
         }
     }
 
@@ -147,5 +285,10 @@ public class GameManager : MonoBehaviour
     public bool IsGameOver()
     {
         return gameOver;
+    }
+
+    private void OnDestroy()
+    {
+        DOTween.Kill(this);
     }
 }

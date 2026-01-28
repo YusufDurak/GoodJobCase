@@ -543,19 +543,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 273512984}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1293150624}
-        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: LoadNextLevel
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &273512984
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1963,7 +1951,11 @@ MonoBehaviour:
   levelText: {fileID: 140727065}
   winPanel: {fileID: 613053438}
   losePanel: {fileID: 1873536946}
+  nextLevelButton: {fileID: 273512983}
+  restartButton: {fileID: 1608192977}
   targetScoreIncrement: 300
+  panelAnimDuration: 0.5
+  buttonAnimDelay: 0.3
 --- !u!4 &1293150625
 Transform:
   m_ObjectHideFlags: 0
@@ -2211,19 +2203,7 @@ MonoBehaviour:
   m_TargetGraphic: {fileID: 1608192978}
   m_OnClick:
     m_PersistentCalls:
-      m_Calls:
-      - m_Target: {fileID: 1293150624}
-        m_TargetAssemblyTypeName: GameManager, Assembly-CSharp
-        m_MethodName: RestartLevel
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
+      m_Calls: []
 --- !u!114 &1608192978
 MonoBehaviour:
   m_ObjectHideFlags: 0
