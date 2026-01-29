@@ -39,14 +39,9 @@ This was actually my first time implementing a proper object pool from scratch. 
 
 ### 3. Procedural Level System
 
-Instead of hardcoding one grid size, I built a level progression system where the grid changes dynamically:
+Instead of hardcoding one grid size, I built a level progression system where the grid changes dynamically.
 
-- **Level 1:** 6×6, 4 colors (easy intro)
-- **Level 2:** 8×8, 5 colors (standard)
-- **Level 3:** 9×7, 5 colors (narrow grid)
-- **Level 4:** 9×9, 6 colors (maximum chaos)
-
-After Level 4, it loops back to Level 1. I wanted to show that the system can handle different configurations without breaking. All the level data is stored in a serialized array, so you can tweak the progression in the Inspector.
+After Level 4, it loops back to Level 1. I wanted to show that the system can handle different configurations without breaking. All the level data is stored in a serialized array, so you can tweak the progression in the Inspector. I believe these 4 levels are sufficient to demonstrate the system's flexibility and validate the performance optimizations on different grid sizes.
 
 ### 4. Smart Shuffle for Deadlocks
 
@@ -79,8 +74,7 @@ The game needed to work on both iPhones and iPads. On iPads (4:3 aspect ratio), 
 
 ### 7. Input System
 
-I used Unity's legacy Input Manager (`Input.GetMouseButtonDown`) instead of the new Input System. Honestly, I'm just more familiar with the old system, and with the deadline I wanted to focus on the core mechanics rather than learning a new input API. It works fine for mouse and touch, so I went with it.
-
+I used Unity's legacy Input Manager (`Input.GetMouseButtonDown`) instead of the new Input System. Honestly, I'm just more familiar with the old system, it works fine for mouse and touch, so I went with it.
 
 ## Features
 
@@ -108,13 +102,12 @@ I used Unity's legacy Input Manager (`Input.GetMouseButtonDown`) instead of the 
 -  Juicy animations 
 -  Screen shake for big matches
 -  Invalid click feedback
--  Particle effects 
+-  Particle effects
 -  Audio with pitch randomization
 
 **Bonus:**
--  Custom Inspector tool (validation + testing button)
--  Performance monitor (F1 to toggle FPS/memory)
-
+-  Custom Inspector tool (BoardManager.cs attached on GameBoard)
+-  Performance monitor (Deactivated by default)
 
 ## How to Test
 
@@ -125,19 +118,17 @@ I used Unity's legacy Input Manager (`Input.GetMouseButtonDown`) instead of the 
 5. Win Level 4 to see it loop back to Level 1
 
 **Testing Tips:**
-- Press **F1** to see FPS and memory usage
 - Select **GameBoard** in Hierarchy to see validation warnings in Inspector
 - Test on different devices using Device Simulator 
 
 **Level Stats:**
 - Level 1: 6×6, 4 colors, 500 target, 25 moves
-- Level 2: 8×8, 5 colors, 1500 target, 30 moves
-- Level 3: 9×7, 5 colors, 2000 target, 35 moves
-- Level 4: 9×9, 6 colors, 3000 target, 40 moves
-
+- Level 2: 8×7, 5 colors, 1000 target, 30 moves
+- Level 3: 8x8, 5 colors, 1250 target, 35 moves
+- Level 4: 8x7, 6 colors, 1500 target, 40 moves
 
 ## Final Thoughts
 
-This was my first time building a full match-3 style game from scratch, and I'm really happy with how it turned out!
+This was my first time building a full match-2 style game from scratch, and I'm really happy with how it turned out!
 
 I tried to focus on clean code and performance optimization since those were emphasized in the case requirements. I hope this shows that I'm excited to learn and can pick up new concepts quickly!
