@@ -1,7 +1,7 @@
 # Blast Mechanic Case Study
 
 **Developed for:** Good Job Games Summer Internship Case  
-**Engine:** Unity 2022.3 LTS  
+**Engine:** Unity 6000.3.4f1 LTS
 **Language:** C#
 
 ![Gameplay Demo](Gameplay.gif)
