@@ -10,6 +10,10 @@ public class ResponsiveCameraController : MonoBehaviour
     [SerializeField] private float paddingPercentage = 0.1f;
     [SerializeField] private float minPadding = 0.5f;
     
+    [Header("UI Safe Area")]
+    [SerializeField] private float topUIMargin = 2.0f;
+    [SerializeField] private float bottomUIMargin = 0.5f;
+    
     [Header("Auto Update")]
     [SerializeField] private bool updateEveryFrame = false;
     
@@ -49,7 +53,10 @@ public class ResponsiveCameraController : MonoBehaviour
         float boardWidth = boardSize.x;
         float boardHeight = boardSize.y;
 
-        float targetHeight = boardHeight / 2f;
+        float totalUIMargin = topUIMargin + bottomUIMargin;
+        float boardHeightWithUI = boardHeight + totalUIMargin;
+
+        float targetHeight = boardHeightWithUI / 2f;
         float targetWidth = boardWidth / 2f;
 
         float aspectRatio = cam.aspect;
@@ -63,7 +70,9 @@ public class ResponsiveCameraController : MonoBehaviour
         Vector3 boardCenter = boardManager.transform.position;
         float cameraZ = transform.position.z;
         
-        transform.position = new Vector3(boardCenter.x, boardCenter.y, cameraZ);
+        float verticalOffset = (topUIMargin - bottomUIMargin) / 2f;
+        
+        transform.position = new Vector3(boardCenter.x, boardCenter.y - verticalOffset, cameraZ);
     }
 
     public void RefreshCamera()

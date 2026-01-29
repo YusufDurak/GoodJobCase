@@ -408,8 +408,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 48
-  m_fontSizeBase: 48
+  m_fontSize: 55
+  m_fontSizeBase: 55
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -733,7 +733,7 @@ MonoBehaviour:
   musicMixerGroup: {fileID: -969817303241259657, guid: 256588b0ea0934149baa35088cdaa202, type: 2}
   sfxSource: {fileID: 0}
   musicSource: {fileID: 0}
-  popSound: {fileID: 8300000, guid: 35ed1549f64897848a09ee6286fda090, type: 3}
+  popSound: {fileID: 8300000, guid: fd9a753d9c8df8a4b9d07a8f3b16675a, type: 3}
   shuffleSound: {fileID: 0}
   matchSound: {fileID: 0}
   fallSound: {fileID: 0}
@@ -941,6 +941,8 @@ MonoBehaviour:
   boardManager: {fileID: 1533912335}
   paddingPercentage: 0.1
   minPadding: 0.5
+  topUIMargin: 2
+  bottomUIMargin: 1
   updateEveryFrame: 0
 --- !u!1 &530429328
 GameObject:
@@ -1108,6 +1110,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
+  - {fileID: 1293150625}
   - {fileID: 443881894}
   - {fileID: 1966062520}
   m_Father: {fileID: 0}
@@ -1984,12 +1987,12 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1293150623}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.41029, y: 0.04253, z: 0}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
+  m_LocalPosition: {x: 0.33661997, y: 0.45374, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
-  m_Father: {fileID: 0}
+  m_Father: {fileID: 571879751}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1533912333
 GameObject:
@@ -2110,7 +2113,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &1534042244
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2559,8 +2562,8 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 48
-  m_fontSizeBase: 48
+  m_fontSize: 55
+  m_fontSizeBase: 55
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
@@ -2712,8 +2715,7 @@ SceneRoots:
   - {fileID: 519420032}
   - {fileID: 619394802}
   - {fileID: 1533912336}
-  - {fileID: 81365398}
   - {fileID: 571879751}
   - {fileID: 933813270}
-  - {fileID: 1293150625}
+  - {fileID: 81365398}
   - {fileID: 1110599119}
