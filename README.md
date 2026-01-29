@@ -1,75 +1,143 @@
-Developed for: Good Job Games Summer Internship Case Engine: Unity 2022.3 LTS Focus: Performance, Algorithm Design, Game Feel
+# Blast Mechanic Case Study
 
-##Overview
+**Developed for:** Good Job Games Summer Internship Case  
+**Engine:** Unity 2022.3 LTS  
+**Language:** C#
 
-This project is a technical implementation of the core "Blast" mechanic found in top-tier puzzle games. The primary goal was to build a robust, scalable foundation that prioritizes mobile performance and memory management while delivering a satisfying "juicy" gameplay experience.
+![Gameplay Demo](Gameplay.gif)
 
-Technical Architecture & Decisions
-1. Zero-Allocation Object Pooling
-The case documentation emphasized CPU/GPU optimization. To avoid the performance cost of Unity's Instantiate and Destroy calls during gameplay: I implemented a custom BlockPool system. Blocks are pre-allocated at initialization. During gameplay, blocks are recycled (deactivated/activated), ensuring zero Garbage Collection allocation during the core loop.
+## Intro
 
-2. Matching Algorithm: BFS over Recursion
-For the color matching logic (Flood Fill), I chose Breadth-First Search (BFS) using a Queue instead of a recursive Depth-First Search (DFS). Why? Recursion can lead to Stack Overflow errors on larger grids (e.g., 10x10 or larger custom sizes). BFS is iterative, safer for memory, and more performant on mobile devices.
+Hey! This is my attempt at building the core "Blast" mechanic for the case study. 
 
-3. "Smart" Deadlock Shuffle
-To solve the "No Moves" situation, I avoided the naive approach of "blindly shuffling until a match is found" as it relies on luck and can cause infinite loops. 
+The UI is pretty basic, just Unity's built-in TextMeshPro and simple panels. I decided to spend most of my time on the code architecture and performance rather than making fancy visuals, since the case requirements emphasized the technical side.
 
-My Solution (Deterministic):
+I learned a ton working on this project, especially around memory management and grid based game systems!
 
-Detect Deadlock (scan grid for any group < 2).
+## Technical Stuff I Implemented
 
-Collect all active blocks and shuffle their data.
+### 1. Breadth-First Search for Flood Fill
 
-Force a Match: Manually place a pair of matching colors at a random coordinate to guarantee at least one valid move.
+For detecting connected blocks, I needed some kind of flood fill algorithm. After researching, I learned that recursive solutions (DFS) can cause stack overflow issues on larger grids, especially on mobile devices.
 
-Update the visual state.
+**What I Did:**
+- I implemented BFS using a `Queue` instead of recursion.
+- It's iterative, so it won't crash even on a 10×10 grid.
+- I reuse the same `Queue` and `HashSet` across searches to avoid creating new collections every time.
 
-4. Visual Feedback (The "Juice")
+I tested this with different grid sizes and it feels pretty solid. The BFS approach was new to me, but it made sense once I understood the stack overflow risk.
 
-To elevate the prototype to a polished feel:
+### 2. Object Pooling 
 
-DOTween Integration: Used for smooth falling animations (DOLocalMove) and spawn punches (DOScale).
+This was actually my first time implementing a proper object pool from scratch. I read that calling `Instantiate()` and `Destroy()` constantly causes garbage collection spikes, which kills performance on mobile.
 
-Dynamic Frame: Implemented a 9-Slice scalable frame that automatically adjusts to the M x N grid dimensions.
+**What I Did:**
+- Created a `BlockPool` class that pre-allocates all the blocks at startup.
+- During gameplay, blocks are just reactivated/deactivated instead of being destroyed.
+- Applied the same pattern to particle effects in `VFXManager`.
 
-Responsive Camera: The camera automatically calculates the required orthographic size to center the grid regardless of the aspect ratio.
 
-##Features
+### 3. Procedural Level System
 
-Configurable Grid: M (Rows), N (Cols), and K (Colors) are fully adjustable via Inspector.
+Instead of hardcoding one grid size, I built a level progression system where the grid changes dynamically:
 
-Dynamic Icons: Blocks change their sprites (Default, Icon1, Icon2, Icon3) based on the connected group size (Thresholds A, B, C).
+- **Level 1:** 6×6, 4 colors (easy intro)
+- **Level 2:** 8×8, 5 colors (standard)
+- **Level 3:** 9×7, 5 colors (narrow grid)
+- **Level 4:** 9×9, 6 colors (maximum chaos)
 
-Input System: Utilized the legacy Input Manager for simplicity and reliability in touch/click detection.
+After Level 4, it loops back to Level 1. I wanted to show that the system can handle different configurations without breaking. All the level data is stored in a serialized array, so you can tweak the progression in the Inspector.
 
-Particle Effects: Optimized particle system that simulates explosions using the block's color data.
+### 4. Smart Shuffle for Deadlocks
 
-##Project Structure
+When the player runs out of valid moves, the game needs to shuffle. But I needed to be careful about the rules for shuffling.
 
-Scripts/Core:
+**My Approach:**
+- Shuffle the block positions.
+- Force at least one match by setting two adjacent blocks to the same color.
+- Verify that a valid move exists before finishing.
 
-BoardManager.cs: Handles the grid logic, input, and game state.
+### 5. DOTween for Animations
 
-BlockPool.cs: Manages memory and object recycling.
+I used DOTween for all the movement and effects:
+- Blocks scale up when spawning (bounce effect).
+- Smooth falling animations with easing.
+- Screen shake for big combos (>5 blocks).
+- Win/Lose panel animations.
 
-Scripts/Entities:
+I made sure to `.Kill()` tweens before starting new ones to avoid memory leaks. DOTween was way easier than writing custom animation coroutines.
 
-Block.cs: Handles individual block visuals and animations.
+### 6. Responsive Camera System
 
-Scripts/Utils:
+The game needed to work on both iPhones and iPads. On iPads (4:3 aspect ratio), the board was clipping into the UI at the top.
 
-AudioManager.cs: Manages SFX with pitch randomization for variety.
+**What I Did:**
+- Built a `ResponsiveCameraController` that calculates the camera size based on the grid dimensions.
+- Added "UI safe area" margins so the top HUD never overlaps.
+- The camera auto-adjusts when switching between levels (6×6 → 9×9).
 
-VFXManager.cs: Handles particle spawning without instantiation spam.
 
-##How to Test
+### 7. Input System
 
-Open the GameScene.
+I used Unity's legacy Input Manager (`Input.GetMouseButtonDown`) instead of the new Input System. Honestly, I'm just more familiar with the old system, and with the deadline I wanted to focus on the core mechanics rather than learning a new input API. It works fine for mouse and touch, so I went with it.
 
-Select the GameBoard object.
 
-Adjust Rows, Columns, and Colors in the Inspector to test edge cases (e.g., 2x2 or 10x10).
+## Features
 
-Press Play.
+**Core Gameplay:**
+-  Configurable grid (rows, columns, colors)
+-  Tap to destroy connected groups (2+ blocks)
+-  Gravity system with animations
+-  New blocks spawn from top
+-  Deadlock detection + smart shuffle
+-  Dynamic icons (blocks change based on group size)
 
-Notes: This project was a great opportunity to demonstrate Data-Oriented thinking in Unity. By separating the logic (Board) from the view (Block), the system remains modular and easy to extend (e.g., adding Power-ups or Level goals).
+**Game Loop:**
+-  4 levels with procedural difficulty
+-  Move counter and score tracking
+-  Win/Lose conditions
+-  Infinite loop (Level 4 → Level 1)
+
+**Performance:**
+-  Object pooling for blocks and particles
+-  Zero allocations during gameplay (verified in Profiler)
+-  BFS algorithm (safe for mobile)
+-  DOTween memory management
+
+**Polish:**
+-  Juicy animations 
+-  Screen shake for big matches
+-  Invalid click feedback
+-  Particle effects 
+-  Audio with pitch randomization
+
+**Bonus:**
+-  Custom Inspector tool (validation + testing button)
+-  Performance monitor (F1 to toggle FPS/memory)
+
+
+## How to Test
+
+1. Open `Assets/Scenes/MainScene.unity`
+2. Hit **Play**
+3. Click on groups of 2+ same-color blocks to destroy them
+4. Try to reach the target score before running out of moves
+5. Win Level 4 to see it loop back to Level 1
+
+**Testing Tips:**
+- Press **F1** to see FPS and memory usage
+- Select **GameBoard** in Hierarchy to see validation warnings in Inspector
+- Test on different devices using Device Simulator 
+
+**Level Stats:**
+- Level 1: 6×6, 4 colors, 500 target, 25 moves
+- Level 2: 8×8, 5 colors, 1500 target, 30 moves
+- Level 3: 9×7, 5 colors, 2000 target, 35 moves
+- Level 4: 9×9, 6 colors, 3000 target, 40 moves
+
+
+## Final Thoughts
+
+This was my first time building a full match-3 style game from scratch, and I'm really happy with how it turned out!
+
+I tried to focus on clean code and performance optimization since those were emphasized in the case requirements. I hope this shows that I'm excited to learn and can pick up new concepts quickly!
