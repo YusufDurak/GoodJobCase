@@ -3,15 +3,25 @@ using UnityEngine.UI;
 using TMPro;
 using DG.Tweening;
 
+[System.Serializable]
+public class LevelConfig
+{
+    public int rows;
+    public int columns;
+    public int colorCount;
+    public int targetScore;
+    public int moves;
+}
+
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
     [Header("Game State")]
     [SerializeField] private int currentLevel = 1;
-    [SerializeField] private int movesLeft = 20;
-    [SerializeField] private int score = 0;
-    [SerializeField] private int targetScore = 500;
+    private int movesLeft;
+    private int score;
+    private int targetScore;
 
     [Header("UI References")]
     [SerializeField] private TextMeshProUGUI scoreText;
@@ -24,12 +34,23 @@ public class GameManager : MonoBehaviour
     [SerializeField] private Button nextLevelButton;
     [SerializeField] private Button restartButton;
 
+    [Header("References")]
+    [SerializeField] private ResponsiveCameraController cameraController;
+
     [Header("Level Progression")]
-    [SerializeField] private int targetScoreIncrement = 300;
+    [SerializeField] private int maxLevel = 4;
+    [SerializeField] private LevelConfig[] levelConfigs = new LevelConfig[]
+    {
+        new LevelConfig { rows = 6, columns = 6, colorCount = 4, targetScore = 500, moves = 25 },
+        new LevelConfig { rows = 8, columns = 8, colorCount = 5, targetScore = 1500, moves = 30 },
+        new LevelConfig { rows = 9, columns = 7, colorCount = 5, targetScore = 2000, moves = 35 },
+        new LevelConfig { rows = 9, columns = 9, colorCount = 6, targetScore = 3000, moves = 40 }
+    };
 
     [Header("Animation Settings")]
     [SerializeField] private float panelAnimDuration = 0.5f;
     [SerializeField] private float buttonAnimDelay = 0.3f;
+    [SerializeField] private float panelTargetScale = 1.5f;
 
     private bool gameOver = false;
     private RectTransform winPanelRect;
@@ -57,8 +78,36 @@ public class GameManager : MonoBehaviour
         if (winPanel != null) winPanel.SetActive(false);
         if (losePanel != null) losePanel.SetActive(false);
 
+        InitializeLevel();
         SetupButtonListeners();
         UpdateUI();
+    }
+
+    private void InitializeLevel()
+    {
+        ApplyLevelConfig(currentLevel);
+    }
+
+    private void ApplyLevelConfig(int level)
+    {
+        if (levelConfigs == null || levelConfigs.Length == 0)
+        {
+            Debug.LogError("No level configurations defined!");
+            return;
+        }
+
+        int configIndex = Mathf.Clamp(level - 1, 0, levelConfigs.Length - 1);
+        LevelConfig config = levelConfigs[configIndex];
+
+        movesLeft = config.moves;
+        targetScore = config.targetScore;
+        score = 0;
+
+        BoardManager boardManager = FindFirstObjectByType<BoardManager>();
+        if (boardManager != null)
+        {
+            boardManager.ConfigureBoard(config.rows, config.columns, config.colorCount);
+        }
     }
 
     private void InitializePanelComponents()
@@ -117,10 +166,7 @@ public class GameManager : MonoBehaviour
         UpdateUI();
         AnimateScoreText();
 
-        if (score >= targetScore)
-        {
-            Win();
-        }
+        CheckWinLoseConditions();
     }
 
     public void DecreaseMove()
@@ -129,9 +175,17 @@ public class GameManager : MonoBehaviour
 
         movesLeft--;
         UpdateUI();
-        AnimateMovesText();
+    }
 
-        if (movesLeft <= 0 && score < targetScore)
+    public void CheckWinLoseConditions()
+    {
+        if (gameOver) return;
+
+        if (score >= targetScore)
+        {
+            Win();
+        }
+        else if (movesLeft <= 0)
         {
             Lose();
         }
@@ -165,7 +219,7 @@ public class GameManager : MonoBehaviour
             canvasGroup.alpha = 0f;
 
             Sequence panelSequence = DOTween.Sequence();
-            panelSequence.Append(panelRect.DOScale(Vector3.one, panelAnimDuration).SetEase(Ease.OutBack));
+            panelSequence.Append(panelRect.DOScale(Vector3.one * panelTargetScale, panelAnimDuration).SetEase(Ease.OutBack));
             panelSequence.Join(canvasGroup.DOFade(1f, panelAnimDuration * 0.5f));
 
             if (button != null)
@@ -217,32 +271,48 @@ public class GameManager : MonoBehaviour
     public void LoadNextLevel()
     {
         currentLevel++;
-        movesLeft = 20;
-        score = 0;
-        targetScore += targetScoreIncrement;
+        
+        if (currentLevel > maxLevel)
+        {
+            currentLevel = 1;
+        }
+        
         gameOver = false;
-
+        ApplyLevelConfig(currentLevel);
         UpdateUI();
 
         BoardManager boardManager = FindFirstObjectByType<BoardManager>();
         if (boardManager != null)
         {
             boardManager.RegenerateBoard();
+            RefreshCameraForNewBoard();
         }
     }
 
     public void RestartLevel()
     {
-        movesLeft = 20;
-        score = 0;
         gameOver = false;
-
+        ApplyLevelConfig(currentLevel);
         UpdateUI();
 
         BoardManager boardManager = FindFirstObjectByType<BoardManager>();
         if (boardManager != null)
         {
             boardManager.RegenerateBoard();
+            RefreshCameraForNewBoard();
+        }
+    }
+
+    private void RefreshCameraForNewBoard()
+    {
+        if (cameraController == null)
+        {
+            cameraController = FindFirstObjectByType<ResponsiveCameraController>();
+        }
+        
+        if (cameraController != null)
+        {
+            cameraController.RefreshCamera();
         }
     }
 
@@ -251,16 +321,7 @@ public class GameManager : MonoBehaviour
         if (scoreText != null)
         {
             scoreText.transform.DOKill();
-            scoreText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f);
-        }
-    }
-
-    private void AnimateMovesText()
-    {
-        if (movesText != null)
-        {
-            movesText.transform.DOKill();
-            movesText.transform.DOPunchScale(Vector3.one * 0.2f, 0.3f, 5, 0.5f);
+            scoreText.transform.DOPunchScale(Vector3.one * 0.1f, 0.2f, 3, 0.5f);
         }
     }
 

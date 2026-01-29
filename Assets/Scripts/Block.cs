@@ -18,10 +18,13 @@ public class Block : MonoBehaviour
     [SerializeField] private float spawnPunchDuration = 0.3f;
     [SerializeField] private float clickPunchScale = 1.15f;
     [SerializeField] private float clickPunchDuration = 0.2f;
+    [SerializeField] private float invalidShakeStrength = 0.15f;
+    [SerializeField] private float invalidShakeDuration = 0.3f;
     
     private Tween currentTween;
     private Tween scaleTween;
     private BlockColorData currentColorData;
+    private Vector3 originalLocalPosition;
 
     private void Awake()
     {
@@ -47,6 +50,7 @@ public class Block : MonoBehaviour
         
         CurrentColor = spriteRenderer.color;
         
+        originalLocalPosition = transform.localPosition;
         transform.localScale = Vector3.zero;
         
         KillScaleTween();
@@ -99,6 +103,18 @@ public class Block : MonoBehaviour
             .SetUpdate(UpdateType.Normal, true);
     }
 
+    public void PlayInvalidClickShake()
+    {
+        KillMoveTween();
+        originalLocalPosition = transform.localPosition;
+        
+        currentTween = transform.DOShakePosition(invalidShakeDuration, invalidShakeStrength, 10, 90, false, true)
+            .SetUpdate(UpdateType.Normal, true)
+            .OnComplete(() => {
+                transform.localPosition = originalLocalPosition;
+            });
+    }
+
     public void Deactivate()
     {
         IsActive = false;
@@ -113,6 +129,7 @@ public class Block : MonoBehaviour
         {
             currentTween.Kill();
             currentTween = null;
+            transform.localPosition = originalLocalPosition;
         }
     }
 

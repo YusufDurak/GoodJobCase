@@ -54,6 +54,13 @@ public class BoardManager : MonoBehaviour
         return new Vector2(width, height);
     }
 
+    public void ConfigureBoard(int newRows, int newColumns, int newColorCount)
+    {
+        rows = Mathf.Clamp(newRows, 2, 10);
+        columns = Mathf.Clamp(newColumns, 2, 10);
+        numberOfColors = Mathf.Clamp(newColorCount, 1, 6);
+    }
+
     private void GenerateBoard()
     {
         grid = new Block[rows, columns];
@@ -170,6 +177,10 @@ public class BoardManager : MonoBehaviour
                 GameManager.Instance.DecreaseMove();
             
             StartCoroutine(DestroyMatchedBlocksSequence(matchedBlocks));
+        }
+        else
+        {
+            block.PlayInvalidClickShake();
         }
     }
 

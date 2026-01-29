@@ -13,6 +13,7 @@ public class BlockPool : MonoBehaviour
     public void Initialize(Transform parent)
     {
         poolParent = new GameObject("PoolContainer").transform;
+        poolParent.SetParent(parent);
         
         for (int i = 0; i < initialPoolSize; i++)
         {

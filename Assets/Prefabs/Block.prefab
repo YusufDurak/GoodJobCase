@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 2445644870531835364}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0.06948, y: 0.92947, z: 0}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -151,7 +151,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd947dcc281b85f4c8f105a0826ad728, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::Block
-  spawnPunchScale: 1.2
   spawnPunchDuration: 0.3
   clickPunchScale: 1.15
   clickPunchDuration: 0.2
+  invalidShakeStrength: 0.15
+  invalidShakeDuration: 0.3
